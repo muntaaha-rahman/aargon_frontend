@@ -16,6 +16,7 @@ import EditClient from "./pages/Clients/EditClient";
 import AddService from "./pages/Services/AddService";
 import EditService from "./pages/Services/EditService";
 import ViewServices from "./pages/Services/ViewServices";
+import StartService from "./pages/Services/StartService";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
               <Route path="/services/add" element={<AddService />} />
 <Route path="/services/edit/:id" element={<EditService />} />
 <Route path="/services" element={<ViewServices />} />
+<Route path="/start_services" element={<StartService />} />
 
 
             </Routes>

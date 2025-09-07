@@ -1,5 +1,6 @@
 /* Tailwind v4 style */
 @import "tailwindcss";
+@import "react-datepicker/dist/react-datepicker.css";
 
 @tailwind base;
 @tailwind components;
