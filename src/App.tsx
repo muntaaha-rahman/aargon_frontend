@@ -12,6 +12,11 @@ import ClientsList from "./pages/Clients/ClientList";
 import AddClient from "./pages/Clients/AddClient";
 import EditClient from "./pages/Clients/EditClient";
 
+
+import AddService from "./pages/Services/AddService";
+import EditService from "./pages/Services/EditService";
+import ViewServices from "./pages/Services/ViewServices";
+
 function App() {
   return (
     <Router>
@@ -30,6 +35,12 @@ function App() {
               <Route path="/clients" element={<ClientsList />} />
               <Route path="/clients/add" element={<AddClient />} />
               <Route path="/clients/edit/:id" element={<EditClient />} />
+
+              {/* Services */}
+              <Route path="/services/add" element={<AddService />} />
+<Route path="/services/edit/:id" element={<EditService />} />
+<Route path="/services" element={<ViewServices />} />
+
 
             </Routes>
           </main>
