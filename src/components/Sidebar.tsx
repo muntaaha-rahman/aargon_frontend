@@ -7,6 +7,9 @@ import {
   Settings,
   ChevronDown,
   ChevronRight,
+  Briefcase,
+  User,
+
 } from "lucide-react";
 
 function Sidebar() {
@@ -109,6 +112,85 @@ function Sidebar() {
               {isExpanded && <span>Settings</span>}
             </Link>
           </li>
+          {/* Clients */}
+  <li>
+    <button
+      onClick={() => toggleMenu("clients")}
+      className="flex items-center gap-2 w-full p-2 rounded hover:bg-gray-700"
+    >
+      <User size={20} />
+      {isExpanded && (
+        <>
+          <span className="flex-1 text-left">Clients</span>
+          {openMenu === "clients" ? (
+            <ChevronDown size={18} />
+          ) : (
+            <ChevronRight size={18} />
+          )}
+        </>
+      )}
+    </button>
+    {openMenu === "clients" && isExpanded && (
+      <ul className="ml-8 mt-1 space-y-1 text-sm">
+        <li>
+          <Link
+            to="/clients/add"
+            className="block p-2 rounded hover:bg-gray-700"
+          >
+            Add Client
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/clients"
+            className="block p-2 rounded hover:bg-gray-700"
+          >
+            View Clients
+          </Link>
+        </li>
+      </ul>
+    )}
+  </li>
+
+  {/* Services */}
+  <li>
+    <button
+      onClick={() => toggleMenu("services")}
+      className="flex items-center gap-2 w-full p-2 rounded hover:bg-gray-700"
+    >
+      <Briefcase size={20} />
+      {isExpanded && (
+        <>
+          <span className="flex-1 text-left">Services</span>
+          {openMenu === "services" ? (
+            <ChevronDown size={18} />
+          ) : (
+            <ChevronRight size={18} />
+          )}
+        </>
+      )}
+    </button>
+    {openMenu === "services" && isExpanded && (
+      <ul className="ml-8 mt-1 space-y-1 text-sm">
+        <li>
+          <Link
+            to="/services/add"
+            className="block p-2 rounded hover:bg-gray-700"
+          >
+            Add Service
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/services"
+            className="block p-2 rounded hover:bg-gray-700"
+          >
+            View Services
+          </Link>
+        </li>
+      </ul>
+    )}
+  </li>
         </ul>
       </nav>
     </aside>

@@ -8,6 +8,10 @@ import Analytics from "./pages/Analytics";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 
+import ClientsList from "./pages/Clients/ClientList";
+import AddClient from "./pages/Clients/AddClient";
+import EditClient from "./pages/Clients/EditClient";
+
 function App() {
   return (
     <Router>
@@ -22,6 +26,11 @@ function App() {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/users" element={<Users />} />
               <Route path="/settings" element={<Settings />} />
+              {/* Clients */}
+              <Route path="/clients" element={<ClientsList />} />
+              <Route path="/clients/add" element={<AddClient />} />
+              <Route path="/clients/edit/:id" element={<EditClient />} />
+
             </Routes>
           </main>
         </div>
