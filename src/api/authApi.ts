@@ -1,3 +1,4 @@
+// src/api/authApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { SERVER_CONFIG } from './config';
 
@@ -7,19 +8,30 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
+  access_token: string;  // Changed from 'token' to 'access_token'
+  refresh_token: string;
+  token_type: string;
   user: {
-    id: string;
+    id: number;         // Changed from string to number
     email: string;
     name: string;
     role: string;
+    created_at: string;
   };
+}
+
+export interface UserInfo {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  created_at: string;
 }
 
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: SERVER_CONFIG.BASE_URL,
+    baseUrl: `${SERVER_CONFIG.BASE_URL}/auth`,
     prepareHeaders: (headers) => {
       const token = localStorage.getItem('token');
       if (token) {
@@ -31,12 +43,21 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
-        url: '/auth/login',
+        url: '/login',
         method: 'POST',
         body: credentials,
       }),
     }),
+    logout: builder.mutation<void, void>({
+      query: () => ({
+        url: '/logout',
+        method: 'POST',
+      }),
+    }),
+    getMe: builder.query<UserInfo, void>({
+      query: () => '/me',
+    }),
   }),
 });
 
-export const { useLoginMutation } = authApi;
+export const { useLoginMutation, useLogoutMutation, useGetMeQuery } = authApi;

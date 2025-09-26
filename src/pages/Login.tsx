@@ -15,19 +15,24 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [login, { isLoading, error }] = useLoginMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  
+  try {
+    const response = await login(formData).unwrap();
+    console.log('Login response:', response);
     
-    try {
-      const response = await login(formData).unwrap();
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      localStorage.setItem('isAuthenticated', 'true');
-      onLogin(); // This will navigate to dashboard
-    } catch (err) {
-      console.error('Login failed:', err);
-    }
-  };
-
+    // Store the correct token field (access_token instead of token)
+    localStorage.setItem('token', response.access_token); // Fixed this line
+    localStorage.setItem('refresh_token', response.refresh_token);
+    localStorage.setItem('user', JSON.stringify(response.user));
+    localStorage.setItem('isAuthenticated', 'true');
+    
+    console.log('Token stored:', localStorage.getItem('token'));
+    onLogin();
+  } catch (err) {
+    console.error('Login failed:', err);
+  }
+};
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
