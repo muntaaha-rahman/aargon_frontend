@@ -1,21 +1,37 @@
 import React from 'react';
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import { lazyLoad } from './utils/lazyLoad';
 
-import Dashboard from "./pages/Dashboard";
-import Analytics from "./pages/Analytics";
-import Users from "./pages/Users";
-import Settings from "./pages/Settings";
-import ClientsList from "./pages/Clients/ClientList";
-import AddClient from "./pages/Clients/AddClient";
-import EditClient from "./pages/Clients/EditClient";
-import AddService from "./pages/Services/AddService";
-import EditService from "./pages/Services/EditService";
-import ViewServices from "./pages/Services/ViewServices";
-import StartService from "./pages/Services/StartService";
+// Lazy load all pages
+const Dashboard = lazyLoad('Dashboard');
+const Analytics = lazyLoad('Analytics');
+const Users = lazyLoad('Users');
+const Settings = lazyLoad('Settings');
+const ClientsList = lazyLoad('Clients/ClientList');
+const AddClient = lazyLoad('Clients/AddClient');
+const EditClient = lazyLoad('Clients/EditClient');
+const AddService = lazyLoad('Services/AddService');
+const EditService = lazyLoad('Services/EditService');
+const ViewServices = lazyLoad('Services/ViewServices');
+const StartService = lazyLoad('Services/StartService');
 
+// Loading component for suspense fallback
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center h-64">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+  </div>
+);
+
+// Private Route wrapper with suspense
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  
+  if (!isAuthenticated) {
+    window.location.href = '/login';
+    return null;
+  }
+  
+  return <React.Suspense fallback={<LoadingSpinner />}>{children}</React.Suspense>;
 };
 
 const PrivateRoutes: React.FC = () => {

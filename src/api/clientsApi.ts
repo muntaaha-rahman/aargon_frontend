@@ -4,33 +4,35 @@ import { SERVER_CONFIG } from './config';
 export interface Client {
   id: number;
   name: string;
-  address: string;
-  contactPerson: string;
   email: string;
-  phone: string;
+  role: string;
   active: boolean;
+  contactPerson?: string;
+  phone?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface ClientCreateRequest {
   name: string;
-  address: string;
-  contactPerson: string;
   email: string;
-  phone: string;
+  password: string; // Required field missing in your current version
+  contactPerson?: string;
+  phone?: string;
 }
 
 export interface ClientResponse {
   id: number;
   name: string;
-  address: string;
-  contactPerson: string;
   email: string;
-  phone: string;
+  role: string;
   active: boolean;
+  contactPerson?: string;
+  phone?: string;
   createdAt: string;
-  updatedAt: string;
+}
+
+export interface ClientStatusUpdate {
+  active: boolean;
 }
 
 export const clientsApi = createApi({
@@ -42,6 +44,7 @@ export const clientsApi = createApi({
       if (token) {
         headers.set('authorization', `Bearer ${token}`);
       }
+      headers.set('Content-Type', 'application/json');
       return headers;
     },
   }),
@@ -51,7 +54,13 @@ export const clientsApi = createApi({
       query: (clientData) => ({
         url: '/clients/',
         method: 'POST',
-        body: clientData,
+        body: {
+          name: clientData.name,
+          email: clientData.email,
+          password: clientData.password,
+          contact_person: clientData.contactPerson, // Convert to snake_case for backend
+          phone: clientData.phone,
+        },
       }),
       invalidatesTags: ['Client'],
     }),

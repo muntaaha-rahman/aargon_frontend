@@ -11,13 +11,51 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-    setIsAuthenticated(authStatus);
-    setIsLoading(false);
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      const authStatus = localStorage.getItem('isAuthenticated') === 'true';
+      
+      if (token && authStatus) {
+        // Verify token is still valid by calling /auth/me
+        try {
+          const response = await fetch('http://localhost:8000/api/v1/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            setIsAuthenticated(true);
+          } else {
+            // Token is invalid, clear storage
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('isAuthenticated');
+            setIsAuthenticated(false);
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('isAuthenticated');
+          setIsAuthenticated(false);
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+      
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
   };
 
   if (isLoading) {
@@ -43,16 +81,7 @@ function App() {
           path="/*" 
           element={
             isAuthenticated ? (
-              <div className="flex h-screen bg-gray-100">
-                <Sidebar />
-                <div className="flex flex-col flex-1">
-                  <Topbar />
-                  <Breadcrumb />
-                  <main className="p-6 flex-1 overflow-auto">
-                    <PrivateRoutes />
-                  </main>
-                </div>
-              </div>
+              <AuthenticatedLayout onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -62,5 +91,21 @@ function App() {
     </Router>
   );
 }
+
+// Separate component for authenticated layout
+const AuthenticatedLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+      <div className="flex flex-col flex-1">
+        <Topbar onLogout={onLogout} />
+        <Breadcrumb />
+        <main className="p-6 flex-1 overflow-auto">
+          <PrivateRoutes />
+        </main>
+      </div>
+    </div>
+  );
+};
 
 export default App;
