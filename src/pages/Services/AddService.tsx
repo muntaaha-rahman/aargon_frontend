@@ -1,16 +1,20 @@
-// src/pages/Services/AddService.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCreateServiceMutation } from "../../api/servicesApi";
 
 function AddService() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [createService, { isLoading }] = useCreateServiceMutation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("New Service:", { name });
-    // TODO: call API to save service
-    navigate("/services");
+    try {
+      await createService({ name }).unwrap();
+      navigate("/services");
+    } catch (error) {
+      console.error("Failed to create service:", error);
+    }
   };
 
   return (
@@ -32,8 +36,9 @@ function AddService() {
           <button
             type="submit"
             className="bg-blue-600 text-white px-4 py-2 text-sm rounded-md hover:bg-blue-700"
+            disabled={isLoading}
           >
-            Save Service
+            {isLoading ? "Saving..." : "Save Service"}
           </button>
         </div>
       </form>
