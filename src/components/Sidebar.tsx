@@ -188,6 +188,22 @@ function Sidebar() {
             View Services
           </Link>
         </li>
+        <li>
+          <Link
+            to="/start_services"
+            className="block p-2 rounded hover:bg-gray-700"
+          >
+            Start Services
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/view_client_services"
+            className="block p-2 rounded hover:bg-gray-700"
+          >
+            View Client Services
+          </Link>
+        </li>
       </ul>
     )}
   </li>
