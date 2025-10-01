@@ -7,13 +7,14 @@ const Dashboard = lazyLoad('Dashboard');
 const Analytics = lazyLoad('Analytics');
 const Users = lazyLoad('Users');
 const Settings = lazyLoad('Settings');
-const ClientsList = lazyLoad('Clients/ViewClients');
+const ViewClients = lazyLoad('Clients/ViewClients');
 const AddClient = lazyLoad('Clients/AddClient');
 const EditClient = lazyLoad('Clients/EditClient');
 const AddService = lazyLoad('Services/AddService');
 const EditService = lazyLoad('Services/EditService');
 const ViewServices = lazyLoad('Services/ViewServices');
 const StartService = lazyLoad('Services/StartService');
+const ViewClientServices = lazyLoad('Services/ViewClientServices');
 
 // Loading component for suspense fallback
 const LoadingSpinner = () => (
@@ -41,13 +42,14 @@ const PrivateRoutes: React.FC = () => {
       <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
       <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
       <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-      <Route path="/clients" element={<PrivateRoute><ClientsList /></PrivateRoute>} />
+      <Route path="/clients" element={<PrivateRoute><ViewClients /></PrivateRoute>} />
       <Route path="/clients/add" element={<PrivateRoute><AddClient /></PrivateRoute>} />
       <Route path="/clients/edit/:id" element={<PrivateRoute><EditClient /></PrivateRoute>} />
       <Route path="/services/add" element={<PrivateRoute><AddService /></PrivateRoute>} />
       <Route path="/services/edit/:id" element={<PrivateRoute><EditService /></PrivateRoute>} />
       <Route path="/services" element={<PrivateRoute><ViewServices /></PrivateRoute>} />
       <Route path="/start_services" element={<PrivateRoute><StartService /></PrivateRoute>} />
+      <Route path="/view_client_services" element={<PrivateRoute><ViewClientServices /></PrivateRoute>} />
     </Routes>
   );
 };
