@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
@@ -20,15 +22,15 @@ interface InvoiceRow {
 }
 
 const InvoiceGeneration: React.FC = () => {
-  // --- NEW PART: Client & Month ---
+  // --- Client & Multi-Month State ---
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [serviceStartMonth, setServiceStartMonth] = useState<Date | null>(null);
+  const [serviceStartMonths, setServiceStartMonths] = useState<Date[]>([]);
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch("/api/clients"); // replace with your API endpoint
+        const response = await fetch("/api/clients"); // Replace with your API endpoint
         const data: Client[] = await response.json();
         setClients(data);
       } catch (err) {
@@ -38,7 +40,7 @@ const InvoiceGeneration: React.FC = () => {
     fetchClients();
   }, []);
 
-  // --- EXISTING PART: Invoice Table ---
+  // --- Invoice Table State ---
   const [rows, setRows] = useState<InvoiceRow[]>([
     {
       service: "Internet",
@@ -79,31 +81,33 @@ const InvoiceGeneration: React.FC = () => {
   };
 
   const generatePDF = () => {
-    if (!selectedClient || !serviceStartMonth) {
-      alert("Please select a client and a month.");
+    if (!selectedClient || serviceStartMonths.length === 0) {
+      alert("Please select a client and at least one month.");
       return;
     }
 
     const doc = new jsPDF();
 
-    // Add client info
+    // Client Info
     doc.text(`Invoice for ${selectedClient.name}`, 10, 10);
+    const monthStrings = serviceStartMonths
+      .map((m) => m.toLocaleDateString("en-US", { month: "long", year: "numeric" }))
+      .join(", ");
+
     const clientData = [
       ["Email", selectedClient.email || "-"],
       ["Phone", selectedClient.phone || "-"],
       ["Address", selectedClient.address || "-"],
-      [
-        "Service Start Month",
-        serviceStartMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-      ],
+      ["Service Start Months", monthStrings],
     ];
+
     (doc as any).autoTable({
       head: [["Field", "Value"]],
       body: clientData,
       startY: 20,
     });
 
-    // Add invoice table
+    // Invoice Table
     const tableColumn = selectedColumns.map((col) => col.toUpperCase());
     const tableRows = rows.map((row) =>
       selectedColumns.map((col) => (row as any)[col] || "")
@@ -131,9 +135,8 @@ const InvoiceGeneration: React.FC = () => {
     <div className="p-6 bg-white rounded-lg shadow-md space-y-6">
       <h2 className="text-xl font-semibold mb-4">Invoice Generation</h2>
 
-      {/* --- NEW PART: Client & Month Picker --- */}
+      {/* Client Selector */}
       <div className="space-y-4">
-        {/* Client Selector */}
         <div>
           <label className="block text-sm font-medium">Select Client</label>
           <select
@@ -163,20 +166,48 @@ const InvoiceGeneration: React.FC = () => {
           </div>
         )}
 
-        {/* Service Start Month */}
+        {/* Multi-Month Picker */}
         <div>
-          <label className="block text-sm font-medium">Service Start Month</label>
-          <input
-            type="month"
-            value={serviceStartMonth ? serviceStartMonth.toISOString().slice(0, 7) : ""}
-            onChange={(e) => setServiceStartMonth(new Date(e.target.value))}
+          <label className="block text-sm font-medium">Select Service Months</label>
+          <DatePicker
+            selected={null}
+            onChange={(date: Date) => {
+              if (date && !serviceStartMonths.find((d) => d.getTime() === date.getTime())) {
+                setServiceStartMonths([...serviceStartMonths, date]);
+              }
+            }}
+            dateFormat="MMMM yyyy"
+            showMonthYearPicker
             className="mt-1 block w-full border border-gray-200 rounded-md p-2"
-            required
+            placeholderText="Select a month"
           />
+
+          {/* Display selected months as tags */}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {serviceStartMonths.map((month, idx) => (
+              <div
+                key={idx}
+                className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full flex items-center space-x-2"
+              >
+                <span>
+                  {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setServiceStartMonths(serviceStartMonths.filter((_, i) => i !== idx))
+                  }
+                  className="text-red-500 font-bold"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* --- EXISTING TABLE --- */}
+      {/* Invoice Table */}
       <table className="min-w-full border border-gray-200">
         <thead>
           <tr className="bg-gray-100 text-left">
