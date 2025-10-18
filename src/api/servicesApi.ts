@@ -49,6 +49,39 @@ export interface ServiceAssignmentStatusUpdate {
   status: boolean;
 }
 
+// Invoice Preview types
+export interface InvoicePreviewRequest {
+  client_id: number;
+  months: string[]; // YYYY-MM-DD
+}
+
+export interface InvoicePreviewServiceItem {
+  assignment_id: number;
+  service_id: number;
+  service_name: string;
+  description: string;
+  link_capacity: string;
+  rate?: number;
+  billing_start_date: string;
+  service_start_month: string;
+  service_stop_date?: string;
+  status: boolean;
+  prorated_days: number;
+  prorated_amount: number;
+}
+
+export interface InvoicePreviewMonth {
+  month: string;
+  label: string;
+  days_in_month: number;
+  services: InvoicePreviewServiceItem[];
+}
+
+export interface InvoicePreviewResponse {
+  client_id: number;
+  months: InvoicePreviewMonth[];
+}
+
 export const servicesApi = createApi({
   reducerPath: 'servicesApi',
   baseQuery: fetchBaseQuery({
@@ -73,17 +106,14 @@ export const servicesApi = createApi({
       }),
       invalidatesTags: ['Service'],
     }),
-    
     getServices: builder.query<Service[], void>({
       query: () => '/services/',
       providesTags: ['Service'],
     }),
-    
     getServiceById: builder.query<Service, number>({
       query: (serviceId) => `/services/${serviceId}`,
       providesTags: ['Service'],
     }),
-    
     updateService: builder.mutation<Service, { serviceId: number; data: ServiceUpdateRequest }>({
       query: ({ serviceId, data }) => ({
         url: `/services/${serviceId}`,
@@ -92,7 +122,6 @@ export const servicesApi = createApi({
       }),
       invalidatesTags: ['Service'],
     }),
-    
     deleteService: builder.mutation<void, number>({
       query: (serviceId) => ({
         url: `/services/${serviceId}`,
@@ -100,7 +129,6 @@ export const servicesApi = createApi({
       }),
       invalidatesTags: ['Service'],
     }),
-    
     updateServiceActive: builder.mutation<Service, { serviceId: number; active: boolean }>({
       query: ({ serviceId, active }) => ({
         url: `/services/${serviceId}/active`,
@@ -119,12 +147,10 @@ export const servicesApi = createApi({
       }),
       invalidatesTags: ['ServiceAssignment'],
     }),
-    
     getServiceAssignments: builder.query<ServiceAssignment[], void>({
       query: () => '/services/assignments',
       providesTags: ['ServiceAssignment'],
     }),
-    
     updateServiceAssignmentStatus: builder.mutation<
       ServiceAssignment,
       { assignmentId: number; status: boolean }
@@ -135,6 +161,15 @@ export const servicesApi = createApi({
         body: { status },
       }),
       invalidatesTags: ['ServiceAssignment'],
+    }),
+
+    // Invoice Preview API
+    getInvoicePreview: builder.mutation<InvoicePreviewResponse, InvoicePreviewRequest>({
+      query: (data) => ({
+        url: '/services/assignments/preview',
+        method: 'POST',
+        body: data,
+      }),
     }),
   }),
 });
@@ -148,5 +183,6 @@ export const {
   useUpdateServiceActiveMutation,
   useCreateServiceAssignmentMutation,
   useGetServiceAssignmentsQuery,
-  useUpdateServiceAssignmentStatusMutation
+  useUpdateServiceAssignmentStatusMutation,
+  useGetInvoicePreviewMutation
 } = servicesApi;

@@ -3,6 +3,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { useGetClientsQuery } from "../../api/clientsApi"; // Adjust path
+import { useGetInvoicePreviewMutation } from "../../api/servicesApi"; // Fixed import
 
 interface Client {
   id: number;
@@ -23,35 +25,16 @@ interface InvoiceRow {
 
 const InvoiceGeneration: React.FC = () => {
   // --- Client & Multi-Month State ---
-  const [clients, setClients] = useState<Client[]>([]);
+  const { data: clientsData, isLoading: clientsLoading } = useGetClientsQuery();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [serviceStartMonths, setServiceStartMonths] = useState<Date[]>([]);
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const response = await fetch("/api/clients"); // Replace with your API endpoint
-        const data: Client[] = await response.json();
-        setClients(data);
-      } catch (err) {
-        console.error("Failed to fetch clients", err);
-      }
-    };
-    fetchClients();
-  }, []);
-
-  // --- Invoice Table State ---
+  // Invoice rows state
   const [rows, setRows] = useState<InvoiceRow[]>([
-    {
-      service: "Internet",
-      days: "30",
-      amount: "100",
-      description: "High speed",
-      linkCapacity: "100 Mbps",
-      rate: "10",
-    },
+    { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "" },
   ]);
 
+  // Columns selection
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
     "service",
     "days",
@@ -61,6 +44,54 @@ const InvoiceGeneration: React.FC = () => {
     "rate",
   ]);
 
+  // Invoice preview mutation
+  const [getInvoicePreview] = useGetInvoicePreviewMutation();
+
+  // Auto-fetch invoice preview when client or months change
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      if (!selectedClient || serviceStartMonths.length === 0) return;
+
+      try {
+        const monthsStr = serviceStartMonths.map(
+          (m) => new Date(Date.UTC(m.getFullYear(), m.getMonth(), 1)).toISOString().substring(0, 10)
+        );
+        const response = await getInvoicePreview({
+          client_id: selectedClient.id,
+          months: monthsStr,
+        }).unwrap();
+
+        if (!response.months || response.months.length === 0) {
+          setRows([
+            { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "" },
+          ]);
+        } else {
+          const invoiceRows: InvoiceRow[] = [];
+          response.months.forEach((month) => {
+            month.services.forEach((service) => {
+              invoiceRows.push({
+                service: service.service_name,
+                days: service.prorated_days.toString(),
+                amount: service.prorated_amount.toFixed(2),
+                description: service.description,
+                linkCapacity: service.link_capacity,
+                rate: service.rate?.toFixed(2) || "",
+              });
+            });
+          });
+          setRows(invoiceRows.length > 0 ? invoiceRows : [
+            { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "" },
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch invoice preview", err);
+      }
+    };
+
+    fetchInvoice();
+  }, [selectedClient, serviceStartMonths, getInvoicePreview]);
+
+  // --- Handlers ---
   const handleAddRow = () => {
     setRows([
       ...rows,
@@ -87,9 +118,8 @@ const InvoiceGeneration: React.FC = () => {
     }
 
     const doc = new jsPDF();
-
-    // Client Info
     doc.text(`Invoice for ${selectedClient.name}`, 10, 10);
+
     const monthStrings = serviceStartMonths
       .map((m) => m.toLocaleDateString("en-US", { month: "long", year: "numeric" }))
       .join(", ");
@@ -107,7 +137,6 @@ const InvoiceGeneration: React.FC = () => {
       startY: 20,
     });
 
-    // Invoice Table
     const tableColumn = selectedColumns.map((col) => col.toUpperCase());
     const tableRows = rows.map((row) =>
       selectedColumns.map((col) => (row as any)[col] || "")
@@ -142,14 +171,14 @@ const InvoiceGeneration: React.FC = () => {
           <select
             value={selectedClient?.id || ""}
             onChange={(e) => {
-              const client = clients.find((c) => c.id === Number(e.target.value));
+              const client = clientsData?.find((c) => c.id === Number(e.target.value));
               setSelectedClient(client || null);
             }}
             className="mt-1 block w-full border border-gray-200 rounded-md p-2"
             required
           >
             <option value="">-- Select Client --</option>
-            {clients.map((client) => (
+            {clientsData?.map((client) => (
               <option key={client.id} value={client.id}>
                 {client.name}
               </option>
@@ -190,7 +219,8 @@ const InvoiceGeneration: React.FC = () => {
                 className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full flex items-center space-x-2"
               >
                 <span>
-                  {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                  {month.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })
+}
                 </span>
                 <button
                   type="button"
