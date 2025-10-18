@@ -15,6 +15,7 @@ const EditService = lazyLoad('Services/EditService');
 const ViewServices = lazyLoad('Services/ViewServices');
 const StartService = lazyLoad('Services/StartService');
 const ViewClientServices = lazyLoad('Services/ViewClientServices');
+const InvoiceGeneration = lazyLoad('Invoices/InvoiceGeneration');
 
 // Loading component for suspense fallback
 const LoadingSpinner = () => (
@@ -50,6 +51,7 @@ const PrivateRoutes: React.FC = () => {
       <Route path="/services" element={<PrivateRoute><ViewServices /></PrivateRoute>} />
       <Route path="/start_services" element={<PrivateRoute><StartService /></PrivateRoute>} />
       <Route path="/view_client_services" element={<PrivateRoute><ViewClientServices /></PrivateRoute>} />
+      <Route path="/invoice" element={<PrivateRoute><InvoiceGeneration /></PrivateRoute>} />
     </Routes>
   );
 };
