@@ -21,17 +21,18 @@ interface InvoiceRow {
   description: string;
   linkCapacity: string;
   rate: string;
+  proratedAmount: string; // New field
 }
 
 const InvoiceGeneration: React.FC = () => {
   // --- Client & Multi-Month State ---
-  const { data: clientsData, isLoading: clientsLoading } = useGetClientsQuery();
+  const { data: clientsData } = useGetClientsQuery();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [serviceStartMonths, setServiceStartMonths] = useState<Date[]>([]);
 
   // Invoice rows state
   const [rows, setRows] = useState<InvoiceRow[]>([
-    { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "" },
+    { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "", proratedAmount: "" },
   ]);
 
   // Columns selection
@@ -42,6 +43,7 @@ const InvoiceGeneration: React.FC = () => {
     "description",
     "linkCapacity",
     "rate",
+    "proratedAmount",
   ]);
 
   // Invoice preview mutation
@@ -54,8 +56,9 @@ const InvoiceGeneration: React.FC = () => {
 
       try {
         const monthsStr = serviceStartMonths.map(
-          (m) => new Date(Date.UTC(m.getFullYear(), m.getMonth(), 1)).toISOString().substring(0, 10)
+          (m) => `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}-01`
         );
+
         const response = await getInvoicePreview({
           client_id: selectedClient.id,
           months: monthsStr,
@@ -63,7 +66,7 @@ const InvoiceGeneration: React.FC = () => {
 
         if (!response.months || response.months.length === 0) {
           setRows([
-            { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "" },
+            { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "", proratedAmount: "" },
           ]);
         } else {
           const invoiceRows: InvoiceRow[] = [];
@@ -76,11 +79,12 @@ const InvoiceGeneration: React.FC = () => {
                 description: service.description,
                 linkCapacity: service.link_capacity,
                 rate: service.rate?.toFixed(2) || "",
+                proratedAmount: service.prorated_amount.toFixed(2),
               });
             });
           });
           setRows(invoiceRows.length > 0 ? invoiceRows : [
-            { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "" },
+            { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "", proratedAmount: "" },
           ]);
         }
       } catch (err) {
@@ -95,7 +99,7 @@ const InvoiceGeneration: React.FC = () => {
   const handleAddRow = () => {
     setRows([
       ...rows,
-      { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "" },
+      { service: "", days: "", amount: "", description: "", linkCapacity: "", rate: "", proratedAmount: "" },
     ]);
   };
 
@@ -158,6 +162,7 @@ const InvoiceGeneration: React.FC = () => {
     { key: "description", label: "Description" },
     { key: "linkCapacity", label: "Link Capacity" },
     { key: "rate", label: "Rate" },
+    { key: "proratedAmount", label: "Prorated Amount" },
   ];
 
   return (
@@ -175,7 +180,6 @@ const InvoiceGeneration: React.FC = () => {
               setSelectedClient(client || null);
             }}
             className="mt-1 block w-full border border-gray-200 rounded-md p-2"
-            required
           >
             <option value="">-- Select Client --</option>
             {clientsData?.map((client) => (
@@ -219,8 +223,7 @@ const InvoiceGeneration: React.FC = () => {
                 className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full flex items-center space-x-2"
               >
                 <span>
-                  {month.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })
-}
+                  {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                 </span>
                 <button
                   type="button"
