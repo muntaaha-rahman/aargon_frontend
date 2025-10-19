@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from 'jspdf-autotable';
 import { useGetClientsQuery } from "../../api/clientsApi";
 import { useGetInvoicePreviewMutation } from "../../api/servicesApi";
 import { useCreateInvoiceMutation } from "../../api/invoiceApi";
@@ -87,11 +87,12 @@ const InvoiceGeneration: React.FC = () => {
   };
 
   const generatePDFAndSend = async () => {
-    if (!selectedClient || serviceStartMonths.length === 0) {
-      alert("Please select a client and at least one month.");
-      return;
-    }
+  if (!selectedClient || serviceStartMonths.length === 0) {
+    alert("Please select a client and at least one month.");
+    return;
+  }
 
+  try {
     const doc = new jsPDF();
     const invoiceNumber = `INV-${Date.now()}`;
 
@@ -99,6 +100,7 @@ const InvoiceGeneration: React.FC = () => {
       .map((m) => m.toLocaleDateString("en-US", { month: "long", year: "numeric" }))
       .join(", ");
 
+    // Client information table
     const clientData = [
       ["Invoice Number", invoiceNumber],
       ["Client Name", selectedClient.name],
@@ -107,36 +109,76 @@ const InvoiceGeneration: React.FC = () => {
       ["Address", selectedClient.address || "-"],
       ["Service Months", monthStrings],
     ];
-    (doc as any).autoTable({ head: [["Field", "Value"]], body: clientData, startY: 10 });
 
-    const tableColumns = ["SL.", ...selectedColumns.map((col) => col.toUpperCase())];
-    const tableRows = rows.map((row, idx) => [idx + 1, ...selectedColumns.map((col) => (row as any)[col] || "")]);
-    (doc as any).autoTable({
+    autoTable(doc, { 
+      head: [["Field", "Value"]], 
+      body: clientData, 
+      startY: 10 
+    });
+
+    // Services table with selected columns only
+    const tableColumns = ["SL.", ...selectedColumns.map((col) => 
+      col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')
+    )];
+    
+    const tableRows = rows.map((row, idx) => [
+      (idx + 1).toString(),
+      ...selectedColumns.map((col) => (row as any)[col] || "-")
+    ]);
+
+    autoTable(doc, {
       head: [tableColumns],
       body: tableRows,
       startY: (doc as any).lastAutoTable.finalY + 10,
     });
 
+    // Total amount
     const total = rows.reduce((sum, row) => sum + parseFloat(row.amount || "0"), 0);
-    doc.text(`Total: ${total.toFixed(2)} (${numberToWords(total)})`, 10, (doc as any).lastAutoTable.finalY + 20);
+    doc.text(`Total: $${total.toFixed(2)} (${numberToWords(Math.round(total))} Dollars)`, 
+      10, (doc as any).lastAutoTable.finalY + 20);
 
+    // Generate PDF file
     const pdfBlob = doc.output("blob");
     const pdfFile = new File([pdfBlob], `${invoiceNumber}.pdf`, { type: "application/pdf" });
+    
+    // Save locally first
     doc.save(`${invoiceNumber}.pdf`);
 
+    // Prepare form data for API
     const formData = new FormData();
-    formData.append("client_id", String(selectedClient.id));
-    formData.append("months", monthStrings);
+    formData.append("client_id", selectedClient.id.toString());
+    formData.append("invoice_number", invoiceNumber);
+    formData.append("total_amount", total.toString());
     formData.append("file", pdfFile);
+    
+    // Add months in the format backend expects
+    serviceStartMonths.forEach((month, index) => {
+      formData.append(`months[${index}]`, month.toISOString().split('T')[0]);
+    });
+
+    // Debug: Check what's being sent
+    console.log("Sending invoice data:", {
+      client_id: selectedClient.id,
+      invoice_number: invoiceNumber,
+      total_amount: total,
+      months: serviceStartMonths.map(m => m.toISOString().split('T')[0])
+    });
 
     try {
+      // Attempt to save invoice via API
       await createInvoice(formData).unwrap();
-      alert("Invoice created successfully!");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to create invoice.");
+      alert("Invoice created and saved successfully!");
+    } catch (apiError) {
+      console.error("API Error:", apiError);
+      // PDF was created successfully, but API call failed
+      alert("PDF was generated and downloaded, but failed to save to server. Check console for details.");
     }
-  };
+
+  } catch (pdfError) {
+    console.error("PDF Generation Error:", pdfError);
+    alert("Failed to generate PDF. Please try again.");
+  }
+};
 
   const columns: { key: keyof InvoiceRow; label: string }[] = [
     { key: "service", label: "Service" },
