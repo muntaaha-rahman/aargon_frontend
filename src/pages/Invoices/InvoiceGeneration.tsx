@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import "jspdf-autotable";
 import { useGetClientsQuery } from "../../api/clientsApi";
 import { useGetInvoicePreviewMutation } from "../../api/servicesApi";
 import { useCreateInvoiceMutation } from "../../api/invoiceApi";
@@ -28,7 +28,7 @@ interface InvoiceRow {
 const numberToWords = (num: number): string => {
   const units = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
   if (num < 10) return units[num];
-  return num.toString(); // Simplified placeholder
+  return num.toString();
 };
 
 const InvoiceGeneration: React.FC = () => {
@@ -43,15 +43,13 @@ const InvoiceGeneration: React.FC = () => {
   const [getInvoicePreview, { data: previewData, isLoading: previewLoading }] = useGetInvoicePreviewMutation();
   const [createInvoice] = useCreateInvoiceMutation();
 
-  // Fetch preview data when client or months change
   useEffect(() => {
     if (selectedClient && serviceStartMonths.length > 0) {
-      const months = serviceStartMonths.map((m) => m.toISOString().split("T")[0]); // YYYY-MM-DD
+      const months = serviceStartMonths.map((m) => m.toISOString().split("T")[0]);
       getInvoicePreview({ client_id: selectedClient.id, months });
     }
   }, [selectedClient, serviceStartMonths]);
 
-  // Fill table from backend preview
   useEffect(() => {
     if (previewData) {
       const newRows = previewData.months.flatMap((month) =>
@@ -154,7 +152,6 @@ const InvoiceGeneration: React.FC = () => {
     <div className="p-6 bg-white rounded-lg shadow-md space-y-6">
       <h2 className="text-xl font-semibold mb-4">Invoice Generation</h2>
 
-      {/* Client Selector */}
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium">Select Client</label>
@@ -175,7 +172,6 @@ const InvoiceGeneration: React.FC = () => {
           </select>
         </div>
 
-        {/* Client Info */}
         {selectedClient && (
           <div className="border border-gray-200 p-2 rounded-md space-y-1">
             <p><strong>Email:</strong> {selectedClient.email || "-"}</p>
@@ -184,7 +180,6 @@ const InvoiceGeneration: React.FC = () => {
           </div>
         )}
 
-        {/* Multi-Month Picker */}
         <div>
           <label className="block text-sm font-medium">Select Service Months</label>
           <DatePicker
@@ -221,7 +216,6 @@ const InvoiceGeneration: React.FC = () => {
         </div>
       </div>
 
-      {/* Invoice Table */}
       {previewLoading ? (
         <p className="text-gray-500 text-center py-4">Loading invoice preview...</p>
       ) : rows.length > 0 ? (
