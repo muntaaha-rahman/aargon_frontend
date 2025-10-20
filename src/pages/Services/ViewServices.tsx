@@ -23,7 +23,7 @@ function ViewServices() {
           {services?.map((service) => (
             <tr key={service.id} className="border-b border-gray-100 hover:bg-gray-50">
               <td className="p-2">{service.name}</td>
-              <td className="p-2">{new Date(service.createdAt).toLocaleDateString()}</td>
+              <td className="p-2">{new Date(service.created_at).toLocaleDateString()}</td>
               {/* Edit button */}
               <td className="p-2 text-center">
                 <Link

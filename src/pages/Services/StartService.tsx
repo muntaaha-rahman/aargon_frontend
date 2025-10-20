@@ -45,7 +45,7 @@ export default function StartService() {
     value: string | number
   ) => {
     const newFields = [...fields];
-    newFields[index][key] = value as any;
+    (newFields[index] as any)[key] = value;
     setFields(newFields);
   };
 

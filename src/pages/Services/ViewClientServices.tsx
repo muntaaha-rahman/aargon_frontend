@@ -5,7 +5,7 @@ import { useGetServicesQuery } from "../../api/servicesApi";
 
 function ViewClientServices() {
   const { data: assignments, isLoading, isError, refetch } = useGetServiceAssignmentsQuery();
-  const { data: clients } = useGetClientsQuery();
+  const { data: clients } = useGetClientsQuery({});
   const { data: services } = useGetServicesQuery();
   const [updateStatus] = useUpdateServiceAssignmentStatusMutation();
 
