@@ -5,6 +5,8 @@ import Topbar from "./components/Topbar";
 import Breadcrumb from "./components/Breadcrumb";
 import Login from "./pages/Login";
 import PrivateRoutes from "./PrivateRoutes";
+import { SERVER_CONFIG } from '../src/api/config';
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -18,7 +20,7 @@ function App() {
       if (token && authStatus) {
         // Verify token is still valid by calling /auth/me
         try {
-          const response = await fetch('http://10.220.220.100:8000/api/v1/auth/me', {
+          const response = await fetch(SERVER_CONFIG.BASE_URL+'/auth/me', {
             headers: {
               'Authorization': `Bearer ${token}`
             }

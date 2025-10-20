@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, User, Bell, Search } from 'lucide-react';
+import { SERVER_CONFIG } from '../api/config';
 
 interface TopbarProps {
   onLogout: () => void;
@@ -15,7 +16,7 @@ const Topbar: React.FC<TopbarProps> = ({ onLogout }) => {
       const token = localStorage.getItem('token');
       
       // Call logout API
-      await fetch('http://10.220.220.100:8000/api/v1/auth/logout', {
+      await fetch(SERVER_CONFIG.BASE_URL+'/auth/logout', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
