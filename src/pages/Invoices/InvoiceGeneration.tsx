@@ -43,7 +43,7 @@ const numberToWords = (num: number): string => {
 };
 
 const InvoiceGeneration: React.FC = () => {
-  const { data: clientsData } = useGetClientsQuery();
+  const { data: clientsData } = useGetClientsQuery({});
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [serviceStartMonths, setServiceStartMonths] = useState<Date[]>([]);
   const [rows, setRows] = useState<InvoiceRow[]>([]);
@@ -231,20 +231,20 @@ const InvoiceGeneration: React.FC = () => {
       termsY += 7;
 
 
-// Footer at bottom with 3 columns
-const pageHeight = doc.internal.pageSize.height;
-const pageWidth = doc.internal.pageSize.width;
-const footerY = pageHeight - 25;
+      // Footer at bottom with 3 columns
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+      const footerY = pageHeight - 25;
 
-// Column 1: Email (left)
-doc.text("ayon@anibd.com", 20, footerY);
+      // Column 1: Email (left)
+      doc.text("ayon@anibd.com", 20, footerY);
 
-// Column 2: Phone (moved more left)
-doc.text("01776554466", pageWidth / 3, footerY, { align: 'center' });
+      // Column 2: Phone (moved more left)
+      doc.text("01776554466", pageWidth / 3, footerY, { align: 'center' });
 
-// Column 3: Address (right)
-doc.text("Nandan Tanijuddin, House:74, Flat: 3/C, Kosaibari", pageWidth - 20, footerY, { align: 'right' });
-doc.text("Kalachandpur, Dhakkukhan, Dhaka: 1230", pageWidth - 20, footerY + 7, { align: 'right' });
+      // Column 3: Address (right)
+      doc.text("Nandan Tanijuddin, House:74, Flat: 3/C, Kosaibari", pageWidth - 20, footerY, { align: 'right' });
+      doc.text("Kalachandpur, Dhakkukhan, Dhaka: 1230", pageWidth - 20, footerY + 7, { align: 'right' });
 
       // Generate PDF file
       const pdfBlob = doc.output("blob");
@@ -323,7 +323,7 @@ doc.text("Kalachandpur, Dhakkukhan, Dhaka: 1230", pageWidth - 20, footerY + 7, {
           <label className="block text-sm font-medium">Select Service Months</label>
           <DatePicker
             selected={null}
-            onChange={(date: Date) => {
+            onChange={(date: Date | null) => {
               if (date && !serviceStartMonths.find((d) => d.getTime() === date.getTime())) {
                 setServiceStartMonths([...serviceStartMonths, date]);
               }

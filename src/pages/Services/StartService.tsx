@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import DatePicker, { registerLocale } from "react-datepicker";
-import enUS from "date-fns/locale/en-US";
+import { enUS } from "date-fns/locale/en-US";
 import "react-datepicker/dist/react-datepicker.css";
 import { useGetClientsQuery } from "../../api/clientsApi";
 import { useGetServicesQuery, useCreateServiceAssignmentMutation } from "../../api/servicesApi";
@@ -15,7 +15,7 @@ interface FlexibleField {
 
 export default function StartService() {
   // API Hooks
-  const { data: clientsData } = useGetClientsQuery();
+  const { data: clientsData } = useGetClientsQuery({});
   const { data: servicesData } = useGetServicesQuery();
   const [createAssignment] = useCreateServiceAssignmentMutation();
 
@@ -77,9 +77,9 @@ export default function StartService() {
         serviceStartMonth.getMonth(),
         1
       );
-      
+
       // Submit each flexible field as separate service assignment
-      const promises = fields.map(field => 
+      const promises = fields.map(field =>
         createAssignment({
           client_id: selectedClientId,
           service_id: selectedServiceId,
@@ -92,14 +92,14 @@ export default function StartService() {
       );
 
       await Promise.all(promises);
-      
+
       alert("Service started successfully!");
-      
+
       // Reset form
       setFields([{ description: "", link_capacity: "", rate: undefined }]);
       setServiceStartMonth(new Date());
       setBillingStartDate(new Date());
-      
+
     } catch (error) {
       console.error("Failed to start service:", error);
       alert("Failed to start service. Please try again.");
@@ -156,7 +156,9 @@ export default function StartService() {
           <label className="block text-sm font-medium">Service Start Month</label>
           <DatePicker
             selected={serviceStartMonth}
-            onChange={(date: Date) => setServiceStartMonth(date)}
+            onChange={(date: Date | null) => {
+              if (date) setServiceStartMonth(date);
+            }}
             dateFormat="MMMM yyyy"
             showMonthYearPicker
             className="mt-1 block w-full border border-gray-200 rounded-md p-2"
@@ -170,7 +172,9 @@ export default function StartService() {
           <label className="block text-sm font-medium">Billing Start Date</label>
           <DatePicker
             selected={billingStartDate}
-            onChange={(date: Date) => setBillingStartDate(date)}
+            onChange={(date: Date | null) => {
+              if (date) setBillingStartDate(date);
+            }}
             dateFormat="dd/MM/yyyy"
             className="mt-1 block w-full border border-gray-200 rounded-md p-2"
             required
