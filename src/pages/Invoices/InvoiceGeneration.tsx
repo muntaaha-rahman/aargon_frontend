@@ -25,10 +25,21 @@ interface InvoiceRow {
   proratedAmount: string;
 }
 
+// Enhanced numberToWords function for Taka
 const numberToWords = (num: number): string => {
-  const units = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
-  if (num < 10) return units[num];
-  return num.toString();
+  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+  const teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  
+  if (num === 0) return "Zero";
+  if (num < 10) return ones[num];
+  if (num < 20) return teens[num - 10];
+  if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 !== 0 ? " " + ones[num % 10] : "");
+  if (num < 1000) return ones[Math.floor(num / 100)] + " Hundred" + (num % 100 !== 0 ? " " + numberToWords(num % 100) : "");
+  if (num < 100000) return numberToWords(Math.floor(num / 1000)) + " Thousand" + (num % 1000 !== 0 ? " " + numberToWords(num % 1000) : "");
+  if (num < 10000000) return numberToWords(Math.floor(num / 100000)) + " Lakh" + (num % 100000 !== 0 ? " " + numberToWords(num % 100000) : "");
+  
+  return "Very Large Amount";
 };
 
 const InvoiceGeneration: React.FC = () => {
@@ -87,98 +98,136 @@ const InvoiceGeneration: React.FC = () => {
   };
 
   const generatePDFAndSend = async () => {
-  if (!selectedClient || serviceStartMonths.length === 0) {
-    alert("Please select a client and at least one month.");
-    return;
-  }
-
-  try {
-    const doc = new jsPDF();
-    const invoiceNumber = `INV-${Date.now()}`;
-
-    const monthStrings = serviceStartMonths
-      .map((m) => m.toLocaleDateString("en-US", { month: "long", year: "numeric" }))
-      .join(", ");
-
-    // Client information table
-    const clientData = [
-      ["Invoice Number", invoiceNumber],
-      ["Client Name", selectedClient.name],
-      ["Email", selectedClient.email || "-"],
-      ["Phone", selectedClient.phone || "-"],
-      ["Address", selectedClient.address || "-"],
-      ["Service Months", monthStrings],
-    ];
-
-    autoTable(doc, { 
-      head: [["Field", "Value"]], 
-      body: clientData, 
-      startY: 10 
-    });
-
-    // Services table with selected columns only
-    const tableColumns = ["SL.", ...selectedColumns.map((col) => 
-      col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')
-    )];
-    
-    const tableRows = rows.map((row, idx) => [
-      (idx + 1).toString(),
-      ...selectedColumns.map((col) => (row as any)[col] || "-")
-    ]);
-
-    autoTable(doc, {
-      head: [tableColumns],
-      body: tableRows,
-      startY: (doc as any).lastAutoTable.finalY + 10,
-    });
-
-    // Total amount
-    const total = rows.reduce((sum, row) => sum + parseFloat(row.amount || "0"), 0);
-    doc.text(`Total: $${total.toFixed(2)} (${numberToWords(Math.round(total))} Dollars)`, 
-      10, (doc as any).lastAutoTable.finalY + 20);
-
-    // Generate PDF file
-    const pdfBlob = doc.output("blob");
-    const pdfFile = new File([pdfBlob], `${invoiceNumber}.pdf`, { type: "application/pdf" });
-    
-    // Save locally first
-    doc.save(`${invoiceNumber}.pdf`);
-
-    // Prepare form data for API
-    const formData = new FormData();
-    formData.append("client_id", selectedClient.id.toString());
-    formData.append("invoice_number", invoiceNumber);
-    formData.append("total_amount", total.toString());
-    formData.append("file", pdfFile);
-    
-    // Add months in the format backend expects
-    serviceStartMonths.forEach((month, index) => {
-      formData.append(`months[${index}]`, month.toISOString().split('T')[0]);
-    });
-
-    // Debug: Check what's being sent
-    console.log("Sending invoice data:", {
-      client_id: selectedClient.id,
-      invoice_number: invoiceNumber,
-      total_amount: total,
-      months: serviceStartMonths.map(m => m.toISOString().split('T')[0])
-    });
-
-    try {
-      // Attempt to save invoice via API
-      await createInvoice(formData).unwrap();
-      alert("Invoice created and saved successfully!");
-    } catch (apiError) {
-      console.error("API Error:", apiError);
-      // PDF was created successfully, but API call failed
-      alert("PDF was generated and downloaded, but failed to save to server. Check console for details.");
+    if (!selectedClient || serviceStartMonths.length === 0) {
+      alert("Please select a client and at least one month.");
+      return;
     }
 
-  } catch (pdfError) {
-    console.error("PDF Generation Error:", pdfError);
-    alert("Failed to generate PDF. Please try again.");
-  }
-};
+    try {
+      const doc = new jsPDF();
+      const invoiceNumber = `INV-${Date.now()}`;
+      
+      // Fixed: Use valid month format
+      const billMonth = serviceStartMonths[0].toLocaleDateString("en-US", { 
+        month: 'long', 
+        year: 'numeric' 
+      }).replace(' ', '/');
+
+      // Company Header
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text("ARGON NETWORK LIMITED", 105, 15, { align: 'center' });
+      
+      // Customer Information
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Customer Name: ${selectedClient.name}`, 20, 30);
+      doc.text(`Customer Address: ${selectedClient.address || '-'}`, 20, 37);
+      doc.text(`Bill Month: ${billMonth}`, 20, 44);
+      doc.text("MRC of IT and Maintenance fees are as per given below:", 20, 51);
+
+      // Prepare table data with selected columns only
+      const columnLabels: { [key: string]: string } = {
+        service: "Service",
+        rate: "Rate",
+        days: "Days", 
+        amount: "Amount",
+        description: "Description",
+        linkCapacity: "Link Capacity",
+        proratedAmount: "Prorated Amount"
+      };
+
+      const tableHead = ["SL", ...selectedColumns.map(col => columnLabels[col] || col)];
+      
+      const tableBody = rows.map((row, idx) => [
+        (idx + 1).toString(),
+        ...selectedColumns.map(col => {
+          const value = (row as any)[col];
+          if (col === 'rate' || col === 'amount' || col === 'proratedAmount') {
+            return value ? `${parseFloat(value).toLocaleString()}/-` : '-';
+          }
+          return value || '-';
+        })
+      ]);
+
+      // Services Table
+      autoTable(doc, {
+        head: [tableHead],
+        body: tableBody,
+        startY: 60,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [220, 220, 220] }
+      });
+
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+      // Total Amount
+      const total = rows.reduce((sum, row) => sum + parseFloat(row.amount || "0"), 0);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Total Amount: ${total.toLocaleString()}/-`, 20, finalY);
+      
+      // Amount in Words
+      const amountInWords = numberToWords(total);
+      doc.text(`Amount in Word: ${amountInWords} Taka Only.`, 20, finalY + 7);
+
+      // Terms & Conditions
+      doc.setFont(undefined, 'bold');
+      doc.text("Terms & Conditions:", 20, finalY + 20);
+      doc.setFont(undefined, 'normal');
+      
+      const terms = [
+        "Payment: MRC to be paid within the 1st-10th of each calendar month. Failure of payment within due time may cause temporary discontinuation of services.",
+        "Payment Methods: Payment should be paid on our Bank Account by cash deposit/Online Bank Transfer/Bank Cheque",
+        "Bank Account Details:",
+        "Account Name: Argon Network Limited",
+        "Account Number: 214100002325", 
+        "Bank Name: Dutch Bangla Bank Limited",
+        "Branch Name: Uttarkhan Branch"
+      ];
+
+      let termsY = finalY + 27;
+      terms.forEach(term => {
+        doc.text(term, 20, termsY);
+        termsY += 7;
+      });
+
+      // Footer
+      doc.text("ayon@anibd.com", 20, termsY + 10);
+      doc.text("D177855448B", 105, termsY + 10, { align: 'center' });
+      doc.text("Nandan Tanijuddin, House:74, Flat: 3/C, Kosaibari Kalachandpur, Dhakkukhan, Dhaka: 1230", 
+        105, termsY + 17, { align: 'center' });
+
+      // Generate PDF file
+      const pdfBlob = doc.output("blob");
+      const pdfFile = new File([pdfBlob], `${invoiceNumber}.pdf`, { type: "application/pdf" });
+      
+      // Save locally
+      doc.save(`${invoiceNumber}.pdf`);
+
+      // Prepare form data for API
+      const formData = new FormData();
+      formData.append("client_id", selectedClient.id.toString());
+      formData.append("invoice_number", invoiceNumber);
+      formData.append("total_amount", total.toString());
+      formData.append("file", pdfFile);
+      
+      // Add months
+      const months = serviceStartMonths.map(m => m.toISOString().split('T')[0]);
+      formData.append("months", JSON.stringify(months));
+
+      try {
+        await createInvoice(formData).unwrap();
+        alert("Invoice created successfully!");
+      } catch (apiError) {
+        console.error("API Error:", apiError);
+        alert("PDF was generated, but failed to save to server.");
+      }
+
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      alert("Failed to generate PDF.");
+    }
+  };
 
   const columns: { key: keyof InvoiceRow; label: string }[] = [
     { key: "service", label: "Service" },
@@ -260,7 +309,7 @@ const InvoiceGeneration: React.FC = () => {
 
       {previewLoading ? (
         <p className="text-gray-500 text-center py-4">Loading invoice preview...</p>
-      ) : rows.length > 0 ? (
+      ) : (
         <table className="min-w-full border border-gray-200">
           <thead>
             <tr className="bg-gray-100 text-left">
@@ -295,10 +344,6 @@ const InvoiceGeneration: React.FC = () => {
             ))}
           </tbody>
         </table>
-      ) : (
-        <p className="text-gray-500 text-center py-4">
-          No data to show. Select client and months.
-        </p>
       )}
 
       <button
