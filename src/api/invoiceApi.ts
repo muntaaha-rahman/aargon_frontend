@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const invoiceApi = createApi({
   reducerPath: "invoiceApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1/",
+    baseUrl: import.meta.env.VITE_API_URL || "http://10.220.220.100:8000/api/v1/",
     prepareHeaders: (headers) => {
       const token = localStorage.getItem('token');
       if (token) {

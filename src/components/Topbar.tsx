@@ -15,7 +15,7 @@ const Topbar: React.FC<TopbarProps> = ({ onLogout }) => {
       const token = localStorage.getItem('token');
       
       // Call logout API
-      await fetch('http://localhost:8000/api/v1/auth/logout', {
+      await fetch('http://10.220.220.100:8000/api/v1/auth/logout', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

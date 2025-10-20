@@ -18,7 +18,7 @@ function App() {
       if (token && authStatus) {
         // Verify token is still valid by calling /auth/me
         try {
-          const response = await fetch('http://localhost:8000/api/v1/auth/me', {
+          const response = await fetch('http://10.220.220.100:8000/api/v1/auth/me', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
