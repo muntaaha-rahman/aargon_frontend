@@ -23,7 +23,8 @@ export default function StartService() {
   const [selectedClientId, setSelectedClientId] = useState<number>(0);
   const [selectedServiceId, setSelectedServiceId] = useState<number>(0);
   const [serviceStartMonth, setServiceStartMonth] = useState(new Date());
-  const [billingStartDate, setBillingStartDate] = useState(new Date());
+  const [useFirstOfMonth, setUseFirstOfMonth] = useState(true);
+  const [billingStartDate, setBillingStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [fields, setFields] = useState<FlexibleField[]>([
     { description: "", link_capacity: "", rate: undefined },
   ]);
@@ -38,6 +39,14 @@ export default function StartService() {
       setSelectedServiceId(servicesData[0].id);
     }
   }, [clientsData, servicesData, selectedClientId, selectedServiceId]);
+
+  useEffect(() => {
+    if (useFirstOfMonth) {
+      // Set billing date to 1st of service start month
+      const firstDay = new Date(serviceStartMonth.getFullYear(), serviceStartMonth.getMonth(), 1);
+      setBillingStartDate(firstDay);
+    }
+  }, [useFirstOfMonth, serviceStartMonth]);
 
   const handleFieldChange = (
     index: number,
@@ -71,20 +80,23 @@ export default function StartService() {
     setIsSubmitting(true);
 
     try {
-      // Format dates
-      const startDate = new Date(
-        serviceStartMonth.getFullYear(),
-        serviceStartMonth.getMonth(),
-        1
-      );
+      // Format dates without timezone issues
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const startDate = new Date(serviceStartMonth.getFullYear(), serviceStartMonth.getMonth(), 1);
 
       // Submit each flexible field as separate service assignment
       const promises = fields.map(field =>
         createAssignment({
           client_id: selectedClientId,
           service_id: selectedServiceId,
-          service_start_month: startDate.toISOString().split('T')[0],
-          billing_start_date: billingStartDate.toISOString().split('T')[0],
+          service_start_month: formatDate(startDate),
+          billing_start_date: formatDate(billingStartDate),
           description: field.description,
           link_capacity: field.link_capacity,
           rate: field.rate
@@ -157,7 +169,13 @@ export default function StartService() {
           <DatePicker
             selected={serviceStartMonth}
             onChange={(date: Date | null) => {
-              if (date) setServiceStartMonth(date);
+              if (date) {
+                setServiceStartMonth(date);
+                if (useFirstOfMonth) {
+                  // Auto-update billing date to 1st of selected month
+                  setBillingStartDate(new Date(date.getFullYear(), date.getMonth(), 1));
+                }
+              }
             }}
             dateFormat="MMMM yyyy"
             showMonthYearPicker
@@ -169,7 +187,18 @@ export default function StartService() {
 
         {/* Billing Start Date */}
         <div>
-          <label className="block text-sm font-medium">Billing Start Date</label>
+          <div className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id="useFirstOfMonth"
+              checked={useFirstOfMonth}
+              onChange={(e) => setUseFirstOfMonth(e.target.checked)}
+              className="mr-2"
+            />
+            <label htmlFor="useFirstOfMonth" className="text-sm font-medium">
+              Use 1st of month as billing date
+            </label>
+          </div>
           <DatePicker
             selected={billingStartDate}
             onChange={(date: Date | null) => {
@@ -177,7 +206,10 @@ export default function StartService() {
             }}
             dateFormat="dd/MM/yyyy"
             className="mt-1 block w-full border border-gray-200 rounded-md p-2"
+            disabled={useFirstOfMonth}
             required
+            minDate={new Date(serviceStartMonth.getFullYear(), serviceStartMonth.getMonth(), 1)}
+            maxDate={new Date(serviceStartMonth.getFullYear(), serviceStartMonth.getMonth() + 1, 0)}
           />
         </div>
 
