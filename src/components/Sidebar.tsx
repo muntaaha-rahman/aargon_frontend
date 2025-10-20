@@ -9,7 +9,7 @@ import {
   ChevronRight,
   Briefcase,
   User,
-
+  FileText,
 } from "lucide-react";
 
 function Sidebar() {
@@ -207,6 +207,38 @@ function Sidebar() {
       </ul>
     )}
   </li>
+
+  {/* Invoice */}
+          <li>
+            <button
+              onClick={() => toggleMenu("invoice")}
+              className="flex items-center gap-2 w-full p-2 rounded hover:bg-gray-700"
+            >
+              <FileText size={20} />
+              {isExpanded && (
+                <>
+                  <span className="flex-1 text-left">Invoice</span>
+                  {openMenu === "invoice" ? (
+                    <ChevronDown size={18} />
+                  ) : (
+                    <ChevronRight size={18} />
+                  )}
+                </>
+              )}
+            </button>
+            {openMenu === "invoice" && isExpanded && (
+              <ul className="ml-8 mt-1 space-y-1 text-sm">
+                <li>
+                  <Link
+                    to="/invoice"
+                    className="block p-2 rounded hover:bg-gray-700"
+                  >
+                    Generate Invoice
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </li>
         </ul>
       </nav>
     </aside>

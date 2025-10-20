@@ -56,7 +56,11 @@ const InvoiceGeneration: React.FC = () => {
 
   useEffect(() => {
     if (selectedClient && serviceStartMonths.length > 0) {
-      const months = serviceStartMonths.map((m) => m.toISOString().split("T")[0]);
+      const months = serviceStartMonths.map((m) => {
+        const year = m.getFullYear();
+        const month = m.getMonth() + 1;
+        return `${year}-${month.toString().padStart(2, '0')}-01`;
+      });
       getInvoicePreview({ client_id: selectedClient.id, months });
     }
   }, [selectedClient, serviceStartMonths]);
@@ -324,8 +328,15 @@ const InvoiceGeneration: React.FC = () => {
           <DatePicker
             selected={null}
             onChange={(date: Date | null) => {
-              if (date && !serviceStartMonths.find((d) => d.getTime() === date.getTime())) {
-                setServiceStartMonths([...serviceStartMonths, date]);
+              if (date) {
+                // Always use the first day of the month
+                const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                if (!serviceStartMonths.find((d) =>
+                  d.getFullYear() === firstDay.getFullYear() &&
+                  d.getMonth() === firstDay.getMonth()
+                )) {
+                  setServiceStartMonths([...serviceStartMonths, firstDay]);
+                }
               }
             }}
             dateFormat="MMMM yyyy"
