@@ -122,15 +122,18 @@ const InvoiceGeneration: React.FC = () => {
       doc.setFont("helvetica", 'bold');
       doc.text("ARGON NETWORK LIMITED", 20, 20);
       doc.line(20, 25, 190, 25);
-      startY: 65
 
-      // Customer Information
+      // Add Invoice text in center
+      doc.setFontSize(16);
+      doc.text("INVOICE", 105, 35, { align: 'center' });
+
+      // Customer Information - ADJUSTED Y POSITIONS
       doc.setFontSize(10);
       doc.setFont("helvetica", 'normal');
-      doc.text(`Customer Name: ${selectedClient.name}`, 20, 30);
-      doc.text(`Customer Address: ${selectedClient.address || '-'}`, 20, 37);
-      doc.text(`Bill Month: ${billMonth}`, 20, 44);
-      doc.text("MRC of IT and Maintenance fees are as per given below:", 20, 51);
+      doc.text(`Customer Name: ${selectedClient.name}`, 20, 45);  // Changed from 30 to 45
+      doc.text(`Customer Address: ${selectedClient.address || '-'}`, 20, 52);  // Changed from 37 to 52
+      doc.text(`Bill Month: ${billMonth}`, 20, 59);  // Changed from 44 to 59
+      doc.text("MRC of IT and Maintenance fees are as per given below:", 20, 66);  // Changed from 51 to 66
 
       // Prepare table data with selected columns only
       const columnLabels: { [key: string]: string } = {
@@ -156,11 +159,11 @@ const InvoiceGeneration: React.FC = () => {
         })
       ]);
 
-      // Services Table
+      // Services Table - ADJUSTED startY
       autoTable(doc, {
         head: [tableHead],
         body: tableBody,
-        startY: 60,
+        startY: 75,  // Changed from 60 to 75
         styles: { fontSize: 10 },
         headStyles: { fillColor: [220, 220, 220] }
       });
@@ -181,7 +184,6 @@ const InvoiceGeneration: React.FC = () => {
       doc.text("Terms & Conditions:", 20, finalY + 20);
       doc.setFont("helvetica", 'normal');
 
-      // Terms & Conditions
       doc.setFont("helvetica", 'bold');
       doc.text("Terms & Conditions:", 20, finalY + 20);
       doc.setFont("helvetica", 'normal');
@@ -196,59 +198,7 @@ const InvoiceGeneration: React.FC = () => {
       doc.text(paymentText, 45, termsY); // Increased from 35 to 45
       termsY += (paymentText.length * 7);
 
-      // Second bullet point - "Payment Methods:" bold  
-      doc.setFont("helvetica", 'bold');
-      doc.text("• Payment Methods:", 20, termsY);
-      doc.setFont("helvetica", 'normal');
-      const paymentMethodsText = doc.splitTextToSize("Payment should be paid on our Bank Account by cash deposit/Online Bank Transfer/Bank Cheque", 140); // Reduced width
-      doc.text(paymentMethodsText, 55, termsY); // Increased from 35 to 45
-      termsY += (paymentMethodsText.length * 7);
 
-      // Bank Account Details - Bold title
-      doc.setFont("helvetica", 'bold');
-      doc.text("• Bank Account Details:", 20, termsY);
-      termsY += 7;
-
-      // Account details - Labels bold, values normal
-      doc.setFont("helvetica", 'bold');
-      doc.text("  Account Name:", 20, termsY);
-      doc.setFont("helvetica", 'normal');
-      doc.text("Argon Network Limited", 60, termsY);
-      termsY += 7;
-
-      doc.setFont("helvetica", 'bold');
-      doc.text("  Account Number:", 20, termsY);
-      doc.setFont("helvetica", 'normal');
-      doc.text("214100002325", 60, termsY);
-      termsY += 7;
-
-      doc.setFont("helvetica", 'bold');
-      doc.text("  Bank Name:", 20, termsY);
-      doc.setFont("helvetica", 'normal');
-      doc.text("Dutch Bangla Bank Limited", 60, termsY);
-      termsY += 7;
-
-      doc.setFont("helvetica", 'bold');
-      doc.text("  Branch Name:", 20, termsY);
-      doc.setFont("helvetica", 'normal');
-      doc.text("Uttarkhan Branch", 60, termsY);
-      termsY += 7;
-
-
-      // Footer at bottom with 3 columns
-      const pageHeight = doc.internal.pageSize.height;
-      const pageWidth = doc.internal.pageSize.width;
-      const footerY = pageHeight - 25;
-
-      // Column 1: Email (left)
-      doc.text("ayon@anibd.com", 20, footerY);
-
-      // Column 2: Phone (moved more left)
-      doc.text("01776554466", pageWidth / 3, footerY, { align: 'center' });
-
-      // Column 3: Address (right)
-      doc.text("Nandan Tanijuddin, House:74, Flat: 3/C, Kosaibari", pageWidth - 20, footerY, { align: 'right' });
-      doc.text("Kalachandpur, Dhakkukhan, Dhaka: 1230", pageWidth - 20, footerY + 7, { align: 'right' });
 
       // Generate PDF file
       const pdfBlob = doc.output("blob");
