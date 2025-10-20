@@ -30,7 +30,7 @@ const numberToWords = (num: number): string => {
   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
   const teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
-  
+
   if (num === 0) return "Zero";
   if (num < 10) return ones[num];
   if (num < 20) return teens[num - 10];
@@ -38,7 +38,7 @@ const numberToWords = (num: number): string => {
   if (num < 1000) return ones[Math.floor(num / 100)] + " Hundred" + (num % 100 !== 0 ? " " + numberToWords(num % 100) : "");
   if (num < 100000) return numberToWords(Math.floor(num / 1000)) + " Thousand" + (num % 1000 !== 0 ? " " + numberToWords(num % 1000) : "");
   if (num < 10000000) return numberToWords(Math.floor(num / 100000)) + " Lakh" + (num % 100000 !== 0 ? " " + numberToWords(num % 100000) : "");
-  
+
   return "Very Large Amount";
 };
 
@@ -106,21 +106,23 @@ const InvoiceGeneration: React.FC = () => {
     try {
       const doc = new jsPDF();
       const invoiceNumber = `INV-${Date.now()}`;
-      
+
       // Fixed: Use valid month format
-      const billMonth = serviceStartMonths[0].toLocaleDateString("en-US", { 
-        month: 'long', 
-        year: 'numeric' 
+      const billMonth = serviceStartMonths[0].toLocaleDateString("en-US", {
+        month: 'long',
+        year: 'numeric'
       }).replace(' ', '/');
 
       // Company Header
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text("ARGON NETWORK LIMITED", 105, 15, { align: 'center' });
-      
+      doc.setFontSize(20);
+      doc.setFont("helvetica", 'bold');
+      doc.text("ARGON NETWORK LIMITED", 20, 20);
+      doc.line(20, 25, 190, 25);
+      startY: 65
+
       // Customer Information
       doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
+      doc.setFont("helvetica", 'normal');
       doc.text(`Customer Name: ${selectedClient.name}`, 20, 30);
       doc.text(`Customer Address: ${selectedClient.address || '-'}`, 20, 37);
       doc.text(`Bill Month: ${billMonth}`, 20, 44);
@@ -130,7 +132,7 @@ const InvoiceGeneration: React.FC = () => {
       const columnLabels: { [key: string]: string } = {
         service: "Service",
         rate: "Rate",
-        days: "Days", 
+        days: "Days",
         amount: "Amount",
         description: "Description",
         linkCapacity: "Link Capacity",
@@ -138,7 +140,7 @@ const InvoiceGeneration: React.FC = () => {
       };
 
       const tableHead = ["SL", ...selectedColumns.map(col => columnLabels[col] || col)];
-      
+
       const tableBody = rows.map((row, idx) => [
         (idx + 1).toString(),
         ...selectedColumns.map(col => {
@@ -163,44 +165,91 @@ const InvoiceGeneration: React.FC = () => {
 
       // Total Amount
       const total = rows.reduce((sum, row) => sum + parseFloat(row.amount || "0"), 0);
-      doc.setFont(undefined, 'bold');
+      doc.setFont("helvetica", 'bold');
       doc.text(`Total Amount: ${total.toLocaleString()}/-`, 20, finalY);
-      
+
       // Amount in Words
       const amountInWords = numberToWords(total);
       doc.text(`Amount in Word: ${amountInWords} Taka Only.`, 20, finalY + 7);
 
       // Terms & Conditions
-      doc.setFont(undefined, 'bold');
+      doc.setFont("helvetica", 'bold');
       doc.text("Terms & Conditions:", 20, finalY + 20);
-      doc.setFont(undefined, 'normal');
-      
-      const terms = [
-        "Payment: MRC to be paid within the 1st-10th of each calendar month. Failure of payment within due time may cause temporary discontinuation of services.",
-        "Payment Methods: Payment should be paid on our Bank Account by cash deposit/Online Bank Transfer/Bank Cheque",
-        "Bank Account Details:",
-        "Account Name: Argon Network Limited",
-        "Account Number: 214100002325", 
-        "Bank Name: Dutch Bangla Bank Limited",
-        "Branch Name: Uttarkhan Branch"
-      ];
+      doc.setFont("helvetica", 'normal');
+
+      // Terms & Conditions
+      doc.setFont("helvetica", 'bold');
+      doc.text("Terms & Conditions:", 20, finalY + 20);
+      doc.setFont("helvetica", 'normal');
 
       let termsY = finalY + 27;
-      terms.forEach(term => {
-        doc.text(term, 20, termsY);
-        termsY += 7;
-      });
 
-      // Footer
-      doc.text("ayon@anibd.com", 20, termsY + 10);
-      doc.text("D177855448B", 105, termsY + 10, { align: 'center' });
-      doc.text("Nandan Tanijuddin, House:74, Flat: 3/C, Kosaibari Kalachandpur, Dhakkukhan, Dhaka: 1230", 
-        105, termsY + 17, { align: 'center' });
+      // First bullet point - "Payment:" bold
+      doc.setFont("helvetica", 'bold');
+      doc.text("• Payment:", 20, termsY);
+      doc.setFont("helvetica", 'normal');
+      const paymentText = doc.splitTextToSize("MRC to be paid within the 1st-10th of each calendar month. Failure of payment within due time may cause temporary discontinuation of services.", 140); // Reduced width
+      doc.text(paymentText, 45, termsY); // Increased from 35 to 45
+      termsY += (paymentText.length * 7);
+
+      // Second bullet point - "Payment Methods:" bold  
+      doc.setFont("helvetica", 'bold');
+      doc.text("• Payment Methods:", 20, termsY);
+      doc.setFont("helvetica", 'normal');
+      const paymentMethodsText = doc.splitTextToSize("Payment should be paid on our Bank Account by cash deposit/Online Bank Transfer/Bank Cheque", 140); // Reduced width
+      doc.text(paymentMethodsText, 55, termsY); // Increased from 35 to 45
+      termsY += (paymentMethodsText.length * 7);
+
+      // Bank Account Details - Bold title
+      doc.setFont("helvetica", 'bold');
+      doc.text("• Bank Account Details:", 20, termsY);
+      termsY += 7;
+
+      // Account details - Labels bold, values normal
+      doc.setFont("helvetica", 'bold');
+      doc.text("  Account Name:", 20, termsY);
+      doc.setFont("helvetica", 'normal');
+      doc.text("Argon Network Limited", 60, termsY);
+      termsY += 7;
+
+      doc.setFont("helvetica", 'bold');
+      doc.text("  Account Number:", 20, termsY);
+      doc.setFont("helvetica", 'normal');
+      doc.text("214100002325", 60, termsY);
+      termsY += 7;
+
+      doc.setFont("helvetica", 'bold');
+      doc.text("  Bank Name:", 20, termsY);
+      doc.setFont("helvetica", 'normal');
+      doc.text("Dutch Bangla Bank Limited", 60, termsY);
+      termsY += 7;
+
+      doc.setFont("helvetica", 'bold');
+      doc.text("  Branch Name:", 20, termsY);
+      doc.setFont("helvetica", 'normal');
+      doc.text("Uttarkhan Branch", 60, termsY);
+      termsY += 7;
+
+
+// Footer at bottom with 3 columns
+const pageHeight = doc.internal.pageSize.height;
+const pageWidth = doc.internal.pageSize.width;
+const footerY = pageHeight - 25;
+
+// Column 1: Email (left)
+doc.text("ayon@anibd.com", 20, footerY);
+
+// Column 2: Phone (moved more left)
+doc.text("01776554466", pageWidth / 3, footerY, { align: 'center' });
+
+// Column 3: Address (right)
+doc.text("Nandan Tanijuddin, House:74, Flat: 3/C, Kosaibari", pageWidth - 20, footerY, { align: 'right' });
+doc.text("Kalachandpur, Dhakkukhan, Dhaka: 1230", pageWidth - 20, footerY + 7, { align: 'right' });
 
       // Generate PDF file
       const pdfBlob = doc.output("blob");
       const pdfFile = new File([pdfBlob], `${invoiceNumber}.pdf`, { type: "application/pdf" });
-      
+
       // Save locally
       doc.save(`${invoiceNumber}.pdf`);
 
@@ -208,9 +257,8 @@ const InvoiceGeneration: React.FC = () => {
       const formData = new FormData();
       formData.append("client_id", selectedClient.id.toString());
       formData.append("invoice_number", invoiceNumber);
-      formData.append("total_amount", total.toString());
       formData.append("file", pdfFile);
-      
+
       // Add months
       const months = serviceStartMonths.map(m => m.toISOString().split('T')[0]);
       formData.append("months", JSON.stringify(months));
