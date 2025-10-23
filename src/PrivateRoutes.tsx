@@ -1,21 +1,21 @@
 import React from 'react';
 import { Routes, Route } from "react-router-dom";
-import { lazyLoad } from './utils/lazyLoad';
+import { lazy, Suspense } from 'react';
 
-// Lazy load all pages
-const Dashboard = lazyLoad('Dashboard');
-const Analytics = lazyLoad('Analytics');
-const Users = lazyLoad('Users');
-const Settings = lazyLoad('Settings');
-const ViewClients = lazyLoad('Clients/ViewClients');
-const AddClient = lazyLoad('Clients/AddClient');
-const EditClient = lazyLoad('Clients/EditClient');
-const AddService = lazyLoad('Services/AddService');
-const EditService = lazyLoad('Services/EditService');
-const ViewServices = lazyLoad('Services/ViewServices');
-const StartService = lazyLoad('Services/StartService');
-const ViewClientServices = lazyLoad('Services/ViewClientServices');
-const InvoiceGeneration = lazyLoad('Invoices/InvoiceGeneration');
+// Lazy load all pages with explicit imports
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Users = lazy(() => import('./pages/Users'));
+const Settings = lazy(() => import('./pages/Settings'));
+const ViewClients = lazy(() => import('./pages/Clients/ViewClients'));
+const AddClient = lazy(() => import('./pages/Clients/AddClient'));
+const EditClient = lazy(() => import('./pages/Clients/EditClient'));
+const AddService = lazy(() => import('./pages/Services/AddService'));
+const EditService = lazy(() => import('./pages/Services/EditService'));
+const ViewServices = lazy(() => import('./pages/Services/ViewServices'));
+const StartService = lazy(() => import('./pages/Services/StartService'));
+const ViewClientServices = lazy(() => import('./pages/Services/ViewClientServices'));
+const InvoiceGeneration = lazy(() => import('./pages/Invoices/InvoiceGeneration'));
 
 // Loading component for suspense fallback
 const LoadingSpinner = () => (
@@ -33,7 +33,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     return null;
   }
   
-  return <React.Suspense fallback={<LoadingSpinner />}>{children}</React.Suspense>;
+  return <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>;
 };
 
 const PrivateRoutes: React.FC = () => {
